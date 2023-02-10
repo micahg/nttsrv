@@ -1,4 +1,5 @@
-import * as http from 'http';
+import { Server } from 'http';
+import { WebSocketServer } from 'ws';
 
 import { log } from "./utils/logger";
 
@@ -14,9 +15,15 @@ let app = expressConfig.create();
 
 // defer listening for requests until we receive an event to check for startup conditions
 // events are emitted when a precondition is satisfied (eg: connecton to the db)
-const serverPromise = new Promise<http.Server>((resolve, reject) => {
+const serverPromise = new Promise<Server>((resolve, reject) => {
   app.on(STARTUP_CHECK_SIG, () => {
-    let srvr = expressConfig.listen(app);
+    let srvr: Server = expressConfig.listen(app);
+    let wss = new WebSocketServer({server: srvr});
+    wss.on('connection', (sock) => {//(sock: WebSocket) => {
+      sock.on('message', (data) => {
+        console.log(`Received ${JSON.stringify(data)}`);
+      });
+    });
     resolve(srvr);
   });
 });

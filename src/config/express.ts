@@ -4,6 +4,7 @@ import { log } from "../utils/logger";
 
 import * as express from "express";
 import * as bodyParser from "body-parser";
+import { Server } from 'http';
 
 /**
  * Create the express middleware.
@@ -55,7 +56,7 @@ export function create(): express.Express {
   return app;
 }
 
-export function listen(app: express.Express) {
+export function listen(app: express.Express):  Server {
   return app.listen(3000, () => {
     log.info(`Listening on port 3000`);
   });
