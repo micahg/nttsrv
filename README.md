@@ -15,7 +15,7 @@ Node.js server implementation that
 ## Testing Upload
 
 ```
-curl -v -X PUT http://localhost:3000/bulkload -F "csv=@test/assets/load.csv"
+curl -v -X PUT http://localhost:3000/asset -F "image=@image.png"
 ```
 
 Where image is actually located at ./image.png
