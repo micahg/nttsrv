@@ -5,9 +5,10 @@ import { WebSocketServer } from 'ws';
 import { log } from "./utils/logger";
 
 import * as expressConfig from "./config/express";
+import { startWSServer } from './utils/websocket';
+import { STARTUP_CHECK_SIG, STARTUP_DONE_SIG } from './utils/constants';
 
-const STARTUP_CHECK_SIG = "startup_check";
-const STARTUP_DONE_SIG = "startup_done";
+
 
 log.info(`System starting in ${process.env.NODE_ENV}`);
 
@@ -20,17 +21,7 @@ const serverPromise = new Promise<Server>((resolve, reject) => {
 
     // presumably the dir was created and we don't need to check for it.
     let srvr: Server = expressConfig.listen(app);
-    // log.info('starting websocket server');
-    // let wss = new WebSocketServer({server: srvr});
-    // wss.on('connection', (sock, req) => {
-    //   log.info(`Websocket connection established ${req.socket.remoteAddress}`);
-
-    //   sock.on('message', (buf) => {
-    //     let data = buf.toString();
-    //     log.info(`Received "${data}"`);
-    //     sock.send('hey yourself');
-    //   });
-    // });
+    let wss = startWSServer(srvr, app);
     app.emit(STARTUP_DONE_SIG);
     resolve(srvr);
   });
