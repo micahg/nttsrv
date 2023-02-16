@@ -12,13 +12,21 @@ export function startWSServer(nodeServer: Server, app: Express) {
 
   app.on(ASSET_UPDATED_SIG, () => {
     wss.clients.forEach((sock:WebSocket) => {
-      sock.send(ASSET_UPDATED_SIG);
+      let msgJS = {
+        'method': ASSET_UPDATED_SIG,
+        'overlay': 'overlay.png',
+      }
+      sock.send(JSON.stringify(msgJS));
     });
   });
 
   wss.on('connection', (sock: WebSocket, req) => {
     log.info(`Websocket connection established ${req.socket.remoteAddress}`);
-
+    let msgJS = {
+      'method': 'connection',
+      'overlay': 'overlay.png',
+    }
+    sock.send(JSON.stringify(msgJS));
     sock.on('message', (buf) => {
       let data = buf.toString();
       log.info(`Received "${data}"`);
