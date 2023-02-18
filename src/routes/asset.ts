@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 
 import { log } from "../utils/logger";
 import path = require('node:path');
+import { ASSET_UPDATED_SIG } from '../utils/constants';
 
 const DEST = 'public/overlay.png';
 
@@ -44,8 +45,11 @@ export function updateAsset(req: Request, res: Response, next: any) {
       return res.sendStatus(500);
     }
 
+    log.info(`Updated ${DEST}`);
+
     // even if we can't remove it, asset is updated at this point
-    next();
+    // next();
+    res.app.emit(ASSET_UPDATED_SIG, DEST);
 
     rm(src, {force: true}, err => {
       if (err) {

@@ -55,17 +55,11 @@ export function create(): express.Express {
   let upload:multer.Multer = multer({dest: destdir});
 
   // TODO this could probably be something like /updates
-  app.get('/', (req, res) => res.status(200).send('hey there\n'));
+  // app.get('/', (req, res) => res.status(200).send('hey there\n'));
   app.put(PATH_ASSET, upload.single('image'), updateAsset);
   // TODO MICAH maybe instead, send the new image back over the websocket?
   // app.get(PATH_ASSET, (req, res) => res.status(200).send('image go here'));
-  app.get(PATH_ASSET, getAsset);
-
-  app.use((req, _) => {
-    if (req.path === PATH_ASSET) {
-      app.emit(ASSET_UPDATED_SIG);
-    }
-  })
+  // app.get(PATH_ASSET, getAsset);
 
   return app;
 }

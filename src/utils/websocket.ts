@@ -10,13 +10,15 @@ export function startWSServer(nodeServer: Server, app: Express) {
   log.info('starting websocket server');
   let wss = new WebSocketServer({server: nodeServer});
 
-  app.on(ASSET_UPDATED_SIG, () => {
+  app.on(ASSET_UPDATED_SIG, (fileName) => {
+    console.log(`Filename is ${fileName}`);
     wss.clients.forEach((sock:WebSocket) => {
-      let msgJS = {
+      let msg = {
         'method': ASSET_UPDATED_SIG,
         'overlay': 'overlay.png',
       }
-      sock.send(JSON.stringify(msgJS));
+      console.log(`Sending ${JSON.stringify(msg)}`)
+      sock.send(JSON.stringify(msg));
     });
   });
 
