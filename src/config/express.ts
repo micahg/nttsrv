@@ -7,7 +7,7 @@ import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
 import { updateAsset } from "../routes/asset";
-import { ASSET_UPDATED_SIG, PATH_ASSET, STATE_ASSET } from "../utils/constants";
+import { ASSETS_UPDATED_SIG, PATH_ASSET, STATE_ASSET } from "../utils/constants";
 import { updateState } from "../routes/state";
 
 /**
