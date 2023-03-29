@@ -15,7 +15,7 @@
     "url": "git+https://github.com/micahg/nttsrv.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com/@micahg"
   },
   "author": "Micah Galizia",
   "license": "MIT",
