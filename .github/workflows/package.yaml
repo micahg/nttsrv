@@ -11,6 +11,19 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - run: npm ci
+      - run: npm build
+  package:
+    needs: [build]  
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
       - uses: actions/checkout@v3
       # Setup .npmrc file to publish to GitHub Packages
       - uses: actions/setup-node@v3
@@ -19,8 +32,6 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           # Defaults to the user or organization that owns the workflow file
           scope: '@micahg'
-      - run: echo "HELLO MICAH"
-      - run: cat $NPM_CONFIG_USERCONFIG
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
