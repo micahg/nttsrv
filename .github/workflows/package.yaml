@@ -39,6 +39,6 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: serverjs
-      - run: npm publish
+      - run: npm pack
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
