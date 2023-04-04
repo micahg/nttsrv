@@ -43,6 +43,6 @@ jobs:
         # env:
         #   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v3
-      - with:
+        with:
           name: server-tgz
           path: micahg-nttsrv-*tgz
