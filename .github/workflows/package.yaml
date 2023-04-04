@@ -40,5 +40,9 @@ jobs:
         with:
           name: serverjs
       - run: npm pack
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v3
+      - with:
+          name: server-tgz
+          path: micahg-nttsrv-*tgz
