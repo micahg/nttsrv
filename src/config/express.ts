@@ -10,6 +10,10 @@ import { updateAsset } from "../routes/asset";
 import { PATH_ASSET, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
+import { auth } from "express-openid-connect";
+
+const authcfg = require('../../auth0.json');
+
 
 /**
  * Create the express middleware.
@@ -18,14 +22,25 @@ import { setViewPort } from "../routes/viewport";
 export function create(): express.Express {
   let app = express();
 
+  try {
+    log.info("Loading auth configuration...");
+    const authMiddleware = auth(authcfg);
+    log.info("Applying authorization middleware...");
+    app.use(authMiddleware);
+  } catch (err) {
+    log.error(`Unable to configure auth: ${JSON.stringify(err)}`);
+  }
+  // app.use(auth(authcfg));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
 
-  // app.use((req, res, next) => {
-  //   if (req.method == "OPTIONS") {
-  //     next();
-  //   }
+  app.use((req, res, next) => {
+    if (req.method == "OPTIONS") {
+      next();
+    }
 
+    log.info(`AUTH IS ${req.oidc.isAuthenticated()}`);
+  });
   //   validateAuthorization(req).then(token => {
   //     let err: string = validateTokenFields(token);
   //     if (err) {
