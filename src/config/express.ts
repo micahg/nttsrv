@@ -10,9 +10,8 @@ import { updateAsset } from "../routes/asset";
 import { PATH_ASSET, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
-import { auth } from "express-openid-connect";
-
-const authcfg = require('../../auth0.json');
+// import { auth, requiresAuth } from "express-openid-connect";
+// const authcfg = require('../../auth0.json');
 
 
 /**
@@ -22,25 +21,27 @@ const authcfg = require('../../auth0.json');
 export function create(): express.Express {
   let app = express();
 
-  try {
-    log.info("Loading auth configuration...");
-    const authMiddleware = auth(authcfg);
-    log.info("Applying authorization middleware...");
-    app.use(authMiddleware);
-  } catch (err) {
-    log.error(`Unable to configure auth: ${JSON.stringify(err)}`);
-  }
+  // try {
+  //   log.info("Loading auth configuration...");
+  //   const authMiddleware = auth(authcfg);
+  //   log.info("Applying authorization middleware...");
+  //   app.use(authMiddleware);
+  // } catch (err) {
+  //   log.error(`Unable to configure auth: ${JSON.stringify(err)}`);
+  //   process.exit(1);
+  // }
   // app.use(auth(authcfg));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
 
-  app.use((req, res, next) => {
-    if (req.method == "OPTIONS") {
-      next();
-    }
-
-    log.info(`AUTH IS ${req.oidc.isAuthenticated()}`);
-  });
+  // app.use((req, res, next) => {
+  //   if (req.method == "OPTIONS") {
+  //     next();
+  //   }
+  //   log.info(`Received ${req.method} ${req.url}`)
+  //   log.info(`AUTH IS ${req.oidc.isAuthenticated()}`);
+  //   next();
+  // });
   //   validateAuthorization(req).then(token => {
   //     let err: string = validateTokenFields(token);
   //     if (err) {
@@ -73,6 +74,9 @@ export function create(): express.Express {
   let destdir: string = os.tmpdir();
   let upload:multer.Multer = multer({dest: destdir});
 
+  // app.get('/profile', requiresAuth(), (req, res) => {
+  //   res.send(JSON.stringify(req.oidc.user));
+  // });
   app.put(PATH_ASSET, upload.single('image'), updateAsset);
   app.get(STATE_ASSET, getState);
   app.put(STATE_ASSET, updateState);
