@@ -7,11 +7,11 @@ import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
 import { updateAsset } from "../routes/asset";
-import { PATH_ASSET, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
+import { NO_AUTH_ASSET, PATH_ASSET, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
-// import { auth, requiresAuth } from "express-openid-connect";
-// const authcfg = require('../../auth0.json');
+
+import { auth } from "express-oauth2-jwt-bearer";
 
 
 /**
@@ -21,42 +21,18 @@ import { setViewPort } from "../routes/viewport";
 export function create(): express.Express {
   let app = express();
 
-  // try {
-  //   log.info("Loading auth configuration...");
-  //   const authMiddleware = auth(authcfg);
-  //   log.info("Applying authorization middleware...");
-  //   app.use(authMiddleware);
-  // } catch (err) {
-  //   log.error(`Unable to configure auth: ${JSON.stringify(err)}`);
-  //   process.exit(1);
-  // }
-  // app.use(auth(authcfg));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
 
-  // app.use((req, res, next) => {
-  //   if (req.method == "OPTIONS") {
-  //     next();
-  //   }
-  //   log.info(`Received ${req.method} ${req.url}`)
-  //   log.info(`AUTH IS ${req.oidc.isAuthenticated()}`);
-  //   next();
-  // });
-  //   validateAuthorization(req).then(token => {
-  //     let err: string = validateTokenFields(token);
-  //     if (err) {
-  //       log.error(`validateTokenFields fails: ${err}`);
-  //       res.status(401).send();
-  //       return;
-  //     }
-
-  //     res.locals.jwt = token;
-  //     next();
-  //   }).catch(reason => {
-  //     log.error(`validateAuthorization fails: ${reason}`);
-  //     res.status(401).send();
-  //   });
-  // });
+  const noauth: boolean = process.env.DISABLE_AUTH === "true";
+  const jwtCheck = noauth ? (_rq: any, _rs: any, next: express.NextFunction) => {
+    log.warn("authentication diabled");
+    next();
+  } : auth({
+    audience: 'http://localhost:3000/',
+    issuerBaseURL: 'https://nttdev.us.auth0.com/',
+    tokenSigningAlg: 'RS256'
+  });
 
   // TODO FIX environment specific cors headers
   app.use((_req, res, next) => {
@@ -74,13 +50,11 @@ export function create(): express.Express {
   let destdir: string = os.tmpdir();
   let upload:multer.Multer = multer({dest: destdir});
 
-  // app.get('/profile', requiresAuth(), (req, res) => {
-  //   res.send(JSON.stringify(req.oidc.user));
-  // });
-  app.put(PATH_ASSET, upload.single('image'), updateAsset);
-  app.get(STATE_ASSET, getState);
-  app.put(STATE_ASSET, updateState);
-  app.put(VIEWPORT_ASSET, setViewPort);
+  app.get(NO_AUTH_ASSET,            (_req, res) => res.status(200).send({noauth: noauth}));
+  app.put(PATH_ASSET,     jwtCheck, upload.single('image'), updateAsset);
+  app.get(STATE_ASSET,    jwtCheck, getState);
+  app.put(STATE_ASSET,    jwtCheck, updateState);
+  app.put(VIEWPORT_ASSET, jwtCheck, setViewPort);
 
   return app;
 }
