@@ -60,7 +60,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Docker registry login
-        uses: docker/login-action
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -71,11 +71,11 @@ jobs:
           name: serverjs
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action
+        uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Docker Build and Push
-        uses: docker/build-push-action
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Dockerfile
