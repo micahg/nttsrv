@@ -31,29 +31,29 @@ jobs:
         with:
           name: serverjs
           path: server.js
-  # publish:
-  #   needs: [build]  
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     # Setup .npmrc file to publish to GitHub Packages
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18.x'
-  #         registry-url: 'https://npm.pkg.github.com'
-  #         # Defaults to the user or organization that owns the workflow file
-  #         scope: '@micahg'
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: serverjs
-  #     - run: npm publish
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    needs: [build]  
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      # Setup .npmrc file to publish to GitHub Packages
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://npm.pkg.github.com'
+          # Defaults to the user or organization that owns the workflow file
+          scope: '@micahg'
+      - uses: actions/download-artifact@v3
+        with:
+          name: serverjs
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   package:
-    needs: [build] # replace with publish
+    needs: [publish]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -87,22 +87,22 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  # version:
-  #   needs: [publish]
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - run: |
-  #         git config --global user.name "$GITHUB_ACTOR"
-  #         git config --global user.email "$GITHUB_ACTOR@github.com"
-  #         npm version patch
-  #         VERSION=$(node -p "require('./package.json').version")
-  #         BRANCH="release/$VERSION"
-  #         echo "Checking out $BRANCH"
-  #         git checkout -b "$BRANCH"
-  #         git push --set-upstream origin "$BRANCH"
+  version:
+    needs: [package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          git config --global user.name "$GITHUB_ACTOR"
+          git config --global user.email "$GITHUB_ACTOR@github.com"
+          npm version patch
+          VERSION=$(node -p "require('./package.json').version")
+          BRANCH="release/$VERSION"
+          echo "Checking out $BRANCH"
+          git checkout -b "$BRANCH"
+          git push --set-upstream origin "$BRANCH"
