@@ -78,8 +78,8 @@ jobs:
           IMAGE_VERSION: ${{needs.build.outputs.package_version}}
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern=$IMAGE_VERSION
+          # tags: |
+          #   type=semver,pattern=$IMAGE_VERSION
       - name: Docker Build and Push
         uses: docker/build-push-action@v4
         with:
