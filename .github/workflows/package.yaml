@@ -75,7 +75,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         env:
-          package_versions: ${{needs.build.outputs.package_version}}
+          package_version: ${{needs.build.outputs.package_version}}
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
