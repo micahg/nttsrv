@@ -10,6 +10,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      package_version: ${{ steps.get_version.outputs.package_version }}
     permissions:
       contents: read
       packages: write
@@ -18,10 +20,10 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - run: |
+      - id: get_version
+        run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "package_version=$VERSION"
-          echo "package_version=$VERSION" >> "$GITHUB_ENV"
           echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run build
@@ -72,6 +74,8 @@ jobs:
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
+        env:
+          package_versions: ${{needs.build.outputs.package_version}}
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
