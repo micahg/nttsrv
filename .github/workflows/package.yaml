@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+      - release/0.0.5
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,13 +18,18 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+      - run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "package_version=$VERSION"
+          echo "package_version=$VERSION" >> "$GITHUB_ENV"
+          echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run build
       - uses: actions/upload-artifact@v3
         with:
           name: serverjs
           path: server.js
-  # package:
+  # publish:
   #   needs: [build]  
   #   runs-on: ubuntu-latest
   #   permissions:
@@ -38,45 +47,54 @@ jobs:
   #     - uses: actions/download-artifact@v3
   #       with:
   #         name: serverjs
-  #     - run: npm pack
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: server-tgz
-  #         path: micahg-nttsrv-*tgz
-  publish:
-    needs: [build]  
+  #     - run: npm publish
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  package:
+    needs: [build] # replace with publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
-      # Setup .npmrc file to publish to GitHub Packages
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Docker registry login
+        uses: docker/login-action
         with:
-          node-version: '18.x'
-          registry-url: 'https://npm.pkg.github.com'
-          # Defaults to the user or organization that owns the workflow file
-          scope: '@micahg'
-      - uses: actions/download-artifact@v3
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get the server js file
+        uses: actions/download-artifact@v3
         with:
           name: serverjs
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  version:
-    needs: [publish]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          git config --global user.name "$GITHUB_ACTOR"
-          git config --global user.email "$GITHUB_ACTOR@github.com"
-          npm version patch
-          VERSION=$(node -p "require('./package.json').version")
-          BRANCH="release/$VERSION"
-          echo "Checking out $BRANCH"
-          git checkout -b "$BRANCH"
-          git push --set-upstream origin "$BRANCH"
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Docker Build and Push
+        uses: docker/build-push-action
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  # version:
+  #   needs: [publish]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - run: |
+  #         git config --global user.name "$GITHUB_ACTOR"
+  #         git config --global user.email "$GITHUB_ACTOR@github.com"
+  #         npm version patch
+  #         VERSION=$(node -p "require('./package.json').version")
+  #         BRANCH="release/$VERSION"
+  #         echo "Checking out $BRANCH"
+  #         git checkout -b "$BRANCH"
+  #         git push --set-upstream origin "$BRANCH"
