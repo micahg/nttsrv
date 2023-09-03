@@ -7,7 +7,7 @@ export function getOAuthPublicKey(): Promise<string> {
     return Promise.resolve(null);
   }
 
-  const iss: string = process.env.ISSUER_URL ||  'https://nttdev.us.auth0.com/';
+  const iss: string = process.env.ISSUER_URL ||  'https://nttdev.us.auth0.com';
   const pem: string = `${iss}/pem`;
 
   return new Promise((resolve, reject) => {
