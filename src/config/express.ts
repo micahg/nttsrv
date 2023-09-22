@@ -33,11 +33,27 @@ export function create(): Express {
     log.warn("Authenticaiton disabled");
   }
 
-  const jwtCheck = noauth ? (_rq: any, _rs: any, next: NextFunction) => next() : auth({
+  // without auth stub out the normally needed fields so we don't have to
+  // handle unauthenticated requests specially. Otherwise, let auth0 populate
+  // the JWT authentication token claims.
+  const jwtCheck = noauth ? (_rq: any, _rs: any, next: NextFunction) => {
+    _rq.auth = {
+      payload: {
+        sub: "noauth|0"
+      }
+    }
+    return next()
+  }: auth({
       audience: aud,
       issuerBaseURL: iss,
       tokenSigningAlg: 'RS256'
   });
+
+  // add request logging
+  app.use((req, res, next) => {
+    res.on('finish', () => log.info('processed', {method: req.method, path: req.path, status: res.statusCode}));
+    next();
+  })
 
   // TODO FIX environment specific cors headers
   app.use((_req, res, next) => {
@@ -55,11 +71,22 @@ export function create(): Express {
   let destdir: string = os.tmpdir();
   let upload:multer.Multer = multer({dest: destdir});
 
-  app.get(NO_AUTH_ASSET,            (_req, res) => res.status(200).send({noauth: noauth}));
+  app.get(NO_AUTH_ASSET,  (_req, res) => res.status(200).send({noauth: noauth}));
   app.put(PATH_ASSET,     jwtCheck, upload.single('image'), updateAsset);
   app.get(STATE_ASSET,    jwtCheck, getState);
   app.put(STATE_ASSET,    jwtCheck, updateState);
   app.put(VIEWPORT_ASSET, jwtCheck, setViewPort);
+
+  // handle errors
+  app.use((err, _req, res, next) => {
+    if (!err) next();
+    if (err.status) {
+      return res.sendStatus(err.status);
+    }
+    log.error(`Unexpected Error: ${JSON.stringify(err)}`);
+    res.sendStatus(500);
+    next();
+  });
 
   return app;
 }
