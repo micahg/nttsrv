@@ -8,7 +8,7 @@ import { startWSServer } from './utils/websocket';
 import { STARTUP_CHECK_SIG, STARTUP_DONE_SIG } from './utils/constants';
 import { getOAuthPublicKey } from './utils/auth';
 
-import { connect } from './config/mongo';
+import { connect } from './config/mongoose';
 
 log.info(`System starting in ${process.env.NODE_ENV}`);
 
@@ -54,9 +54,9 @@ mkdir('public', {recursive: true}, (err, path) => {
   app.emit(STARTUP_CHECK_SIG);
 });
 
-connect().command({ping: 1}).then(value => {
+connect().then(() => {
   mongoConnectedFlag = true;
-  log.info('MongoDB ping succeeded');
+  log.info('MongoDB connection succeeded');
   app.emit(STARTUP_CHECK_SIG);
 }).catch(err => {
   log.error(`Unable to ping mongo: ${err}`);
