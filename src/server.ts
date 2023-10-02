@@ -9,18 +9,37 @@ import { STARTUP_CHECK_SIG, STARTUP_DONE_SIG } from './utils/constants';
 import { getOAuthPublicKey } from './utils/auth';
 
 import { connect } from './config/mongoose';
+import mongoose from 'mongoose';
 
 log.info(`System starting in ${process.env.NODE_ENV}`);
 
 // startup flags
+let srvr: Server;
+let mongo: typeof mongoose;
 let mongoConnectedFlag = false;
 let storageConnectedFlag = false;
 
-let app = expressConfig.create();
+export const app = expressConfig.create();
+
+export const shutDown = (reason: string) => {
+  log.warn(`Shutting down (${reason})`);
+  if (mongo) {
+    log.warn(`Closing mongo connection...`);
+    mongo.connection.close().then(() => log.warn('Mongo connection closed'))
+      .catch(err => log.error(`Unable to close mongo connection: ${JSON.stringify(err)}`));
+  }
+  if (srvr) {
+    log.warn(`Closing down server...`);
+    srvr.close(err => {
+      if (err) console.error(`Unable to shutdown server: ${JSON.stringify(err)}`);
+      else log.warn('Server shut down');
+    });
+  }
+}
 
 // defer listening for requests until we receive an event to check for startup conditions
 // events are emitted when a precondition is satisfied (eg: connecton to the db)
-const serverPromise = new Promise<Server>((resolve, reject) => {
+export const serverPromise = new Promise<Server>((resolve, reject) => {
   app.on(STARTUP_CHECK_SIG, () => {
 
     if (!mongoConnectedFlag) return;
@@ -29,7 +48,8 @@ const serverPromise = new Promise<Server>((resolve, reject) => {
     log.info('All startup flags set');
 
     // presumably the dir was created and we don't need to check for it.
-    let srvr: Server = expressConfig.listen(app);
+    // let srvr: Server = expressConfig.listen(app);
+    srvr = expressConfig.listen(app);
     getOAuthPublicKey().then(pem => {
       log.info('Retrieved OAuth PEM');
       let wss = startWSServer(srvr, app, pem);
@@ -54,8 +74,9 @@ mkdir('public', {recursive: true}, (err, path) => {
   app.emit(STARTUP_CHECK_SIG);
 });
 
-connect().then(() => {
+connect().then(goose => {
   mongoConnectedFlag = true;
+  mongo = goose;
   log.info('MongoDB connection succeeded');
   app.emit(STARTUP_CHECK_SIG);
 }).catch(err => {
@@ -63,5 +84,9 @@ connect().then(() => {
   process.exit(1);
 });
 
+// gracefully shut down
+process.on('SIGTERM', () => shutDown('SIGINT'));
+process.on('SIGINT', () => shutDown('SIGINT'));
+
 // TODO for unit testing probably export a promise that returns server instead.
-export default serverPromise;
+// export default serverPromise;

@@ -8,11 +8,12 @@ import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
 import { updateAsset } from "../routes/asset";
-import { NO_AUTH_ASSET, PATH_ASSET, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
+import { NO_AUTH_ASSET, PATH_ASSET, SCENE_PATH, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
 
 import { auth } from "express-oauth2-jwt-bearer";
+import { createScene, getScenes } from "../routes/scene";
 
 
 /**
@@ -20,7 +21,7 @@ import { auth } from "express-oauth2-jwt-bearer";
  * @returns an express app.
  */
 export function create(): Express {
-  let app = express();
+  const app = express();
 
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
@@ -76,6 +77,8 @@ export function create(): Express {
   app.get(STATE_ASSET,    jwtCheck, getState);
   app.put(STATE_ASSET,    jwtCheck, updateState);
   app.put(VIEWPORT_ASSET, jwtCheck, setViewPort);
+  app.get(SCENE_PATH,     jwtCheck, getScenes);
+  app.put(SCENE_PATH,     jwtCheck, createScene);
 
   // handle errors
   app.use((err, _req, res, next) => {
