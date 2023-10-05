@@ -1,17 +1,12 @@
-import { Scene } from "../models/scene";
-import { User } from "../models/user";
-import { log } from "../utils/logger";
 import { Request, Response } from "express";
+import { getOrCreateUser } from "../utils/user";
+import { getScenesByUser } from "../utils/scene";
 
 export function getScenes(req: Request, res: Response, next: any) {
-  const sub =req.auth.payload.sub;
-  if (!sub) return res.sendStatus(401);
-  User.find({sub: sub}).then(user => {
-    res.json(user);
-  }).catch(err => {
-    log.error(err);
-    return res.sendStatus(500);
-  });
+  return getOrCreateUser(req.auth)
+    .then(user => getScenesByUser(user))
+    .then(scenes => res.status(200).json(scenes))
+    .catch(() => next({status: 500}));
 }
 export function createScene(req: Request, res: Response, next: any) {
   return res.sendStatus(201);

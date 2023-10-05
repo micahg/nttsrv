@@ -11,6 +11,8 @@ import { getOAuthPublicKey } from './utils/auth';
 import { connect } from './config/mongoose';
 import mongoose from 'mongoose';
 
+// mongoose.set('debug', true);
+
 log.info(`System starting in ${process.env.NODE_ENV}`);
 
 // startup flags
@@ -62,31 +64,36 @@ export const serverPromise = new Promise<Server>((resolve, reject) => {
   });
 });
 
-// TODO move this to the storage driver
-log.info(`Create public resources folder...`);
-mkdir('public', {recursive: true}, (err, path) => {
-  if (err) {
-    log.error(`Unable to create public folder: ${JSON.stringify(err)}`);
+export function startUp() {
+  // TODO move this to the storage driver
+  log.info(`Create public resources folder...`);
+  mkdir('public', {recursive: true}, (err, path) => {
+    if (err) {
+      log.error(`Unable to create public folder: ${JSON.stringify(err)}`);
+      process.exit(1);
+    }
+    log.info('Created public asset path');
+    storageConnectedFlag = true;
+    app.emit(STARTUP_CHECK_SIG);
+  });
+  
+  connect().then(goose => {
+    mongoConnectedFlag = true;
+    mongo = goose;
+    log.info('MongoDB connection succeeded');
+    app.emit(STARTUP_CHECK_SIG);
+  }).catch(err => {
+    log.error(`Unable to ping mongo: ${err}`);
     process.exit(1);
-  }
-  log.info(`Created public asset path`);
-  storageConnectedFlag = true;
-  app.emit(STARTUP_CHECK_SIG);
-});
+  });
 
-connect().then(goose => {
-  mongoConnectedFlag = true;
-  mongo = goose;
-  log.info('MongoDB connection succeeded');
-  app.emit(STARTUP_CHECK_SIG);
-}).catch(err => {
-  log.error(`Unable to ping mongo: ${err}`);
-  process.exit(1);
-});
+  // gracefully shut down
+  process.on('SIGTERM', () => shutDown('SIGINT'));
+  process.on('SIGINT', () => shutDown('SIGINT'));
+}
 
-// gracefully shut down
-process.on('SIGTERM', () => shutDown('SIGINT'));
-process.on('SIGINT', () => shutDown('SIGINT'));
-
-// TODO for unit testing probably export a promise that returns server instead.
-// export default serverPromise;
+// if we're not main module then we're running in jest and it needs to call
+// startup
+if (require.main === module) {
+  startUp();
+}

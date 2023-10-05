@@ -1,5 +1,3 @@
-import { log } from "../utils/logger";
-import { promises, resolveAny } from 'dns';
 import * as https from 'https';
 
 export function getOAuthPublicKey(): Promise<string> {

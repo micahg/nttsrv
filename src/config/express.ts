@@ -15,21 +15,10 @@ import { setViewPort } from "../routes/viewport";
 import { auth } from "express-oauth2-jwt-bearer";
 import { createScene, getScenes } from "../routes/scene";
 
-
-/**
- * Create the express middleware.
- * @returns an express app.
- */
-export function create(): Express {
-  const app = express();
-
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({extended: true}));
-  
-  const noauth: boolean = process.env.DISABLE_AUTH?.toLowerCase() === "true";
+export function getJWTCheck(noauth: boolean) {
   const aud: string = process.env.AUDIENCE_URL || 'http://localhost:3000/';
   const iss: string = process.env.ISSUER_URL ||  'https://nttdev.us.auth0.com/';
-  
+
   if (noauth) {
     log.warn("Authenticaiton disabled");
   }
@@ -37,7 +26,7 @@ export function create(): Express {
   // without auth stub out the normally needed fields so we don't have to
   // handle unauthenticated requests specially. Otherwise, let auth0 populate
   // the JWT authentication token claims.
-  const jwtCheck = noauth ? (_rq: any, _rs: any, next: NextFunction) => {
+  return noauth ? (_rq: any, _rs: any, next: NextFunction) => {
     _rq.auth = {
       payload: {
         sub: "noauth|0"
@@ -49,6 +38,20 @@ export function create(): Express {
       issuerBaseURL: iss,
       tokenSigningAlg: 'RS256'
   });
+}
+
+/**
+ * Create the express middleware.
+ * @returns an express app.
+ */
+export function create(): Express {
+  const noauth: boolean = process.env.DISABLE_AUTH?.toLowerCase() === "true";
+  const app = express();
+
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended: true}));
+
+  const jwtCheck = getJWTCheck(noauth);
 
   // add request logging
   app.use((req, res, next) => {
@@ -81,12 +84,17 @@ export function create(): Express {
   app.put(SCENE_PATH,     jwtCheck, createScene);
 
   // handle errors
-  app.use((err, _req, res, next) => {
+  app.use((err, req, res, next) => {
     if (!err) next();
     if (err.status) {
       return res.sendStatus(err.status);
     }
-    log.error(`Unexpected Error: ${JSON.stringify(err)}`);
+    // generic in-app exception handling
+    if (err.cause === 401) {
+      log.error(`${req.method} failed`, {status: err.cause, err: err.message});
+      return res.sendStatus(err.cause);
+    }
+    log.error(`Unexpected Error: ${err.message}`);
     res.sendStatus(500);
     next();
   });
