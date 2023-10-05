@@ -1,0 +1,22 @@
+name: Test changes
+on:
+  push:
+    branches-ignore:
+      - main
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      package_version: ${{ steps.get_version.outputs.package_version }}
+    permissions:
+      contents: read
+    steps:
+    # cache download ./node_modules/.cache
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - run: npm run test
