@@ -30,7 +30,7 @@ export async function createUser(auth: AuthResult) {
   // }
 }
 
-export function getOrCreateUser(auth: AuthResult) {
+export function getOrCreateUser(auth: AuthResult): Promise<IUser> {
   return getUser(auth).then(user => {
     if (user) return user;
     return createUser(auth)

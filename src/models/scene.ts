@@ -10,9 +10,9 @@ interface IScene {
   _id?: Schema.Types.ObjectId,
   user: Schema.Types.ObjectId;
   description: string;
-  overlayContent: string;
-  userContent: string;
-  tableContent: string;
+  overlayContent?: string;
+  userContent?: string;
+  tableContent?: string;
 }
 
 const SceneSchema = new Schema<IScene>({

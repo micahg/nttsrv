@@ -29,9 +29,7 @@ beforeAll(done => {
   );
 });
 
-afterAll(() => {
-  shutDown('SIGJEST');
-});
+afterAll(() => shutDown('SIGJEST'));
 
 describe("scene", () => {
 
@@ -43,7 +41,7 @@ describe("scene", () => {
 
   it('Should find empty scenes when there are no scenes', async () => {
     (userUtils.getOrCreateUser as jest.Mock).mockReturnValue(Promise.resolve({sub: 'd00t'}));
-    (sceneUtils.getScenesByUser as jest.Mock).mockReturnValue(Promise.resolve([]));
+    (sceneUtils.getOrCreateScenes as jest.Mock).mockReturnValue(Promise.resolve([]));
     const resp = await request(app).get('/scene');
     expect(resp.body).toHaveLength(0);
     expect(resp.body).toEqual([]);
@@ -53,7 +51,7 @@ describe("scene", () => {
   it('Should find one scene when there is one scene', async () => {
     const scene = { _id: "id", user: "user_id"};
     (userUtils.getOrCreateUser as jest.Mock).mockReturnValue(Promise.resolve({sub: 'd00t'}));
-    (sceneUtils.getScenesByUser as jest.Mock).mockReturnValue(Promise.resolve([scene]));
+    (sceneUtils.getOrCreateScenes as jest.Mock).mockReturnValue(Promise.resolve([scene]));
     const resp = await request(app).get('/scene');
     expect(resp.body).toHaveLength(1);
     expect(resp.body).toEqual([scene]);
