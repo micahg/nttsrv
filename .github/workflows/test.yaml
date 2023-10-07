@@ -30,6 +30,4 @@ jobs:
           key: ${{ env.MONGO_BINARY }}
       - run: npm ci
       - run: npm run test
-      - run: |
-          ls -lt ${{ env.MONGO_CACHE_PATH }}
-          ls -lt ~/.cache/mongodb-binaries
+      - run: ls -lt ${{ env.MONGO_CACHE_PATH }}
