@@ -23,3 +23,5 @@ export function getOAuthPublicKey(): Promise<string> {
     }
   });
 }
+
+export function getFakeUser() { return "noauth|0" }

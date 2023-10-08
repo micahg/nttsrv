@@ -14,8 +14,9 @@ import { setViewPort } from "../routes/viewport";
 
 import { auth } from "express-oauth2-jwt-bearer";
 import { createScene, getScenes } from "../routes/scene";
+import { getFakeUser } from "../utils/auth";
 
-export function getJWTCheck(noauth: boolean) {
+function getJWTCheck(noauth: boolean) {
   const aud: string = process.env.AUDIENCE_URL || 'http://localhost:3000/';
   const iss: string = process.env.ISSUER_URL ||  'https://nttdev.us.auth0.com/';
 
@@ -29,14 +30,14 @@ export function getJWTCheck(noauth: boolean) {
   return noauth ? (_rq: any, _rs: any, next: NextFunction) => {
     _rq.auth = {
       payload: {
-        sub: "noauth|0"
+        sub: getFakeUser()
       }
     }
     return next()
   }: auth({
-      audience: aud,
-      issuerBaseURL: iss,
-      tokenSigningAlg: 'RS256'
+    audience: aud,
+    issuerBaseURL: iss,
+    tokenSigningAlg: 'RS256'
   });
 }
 
