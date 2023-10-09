@@ -1,4 +1,3 @@
-// import { describe, it } from 'node:test';
 process.env['DISABLE_AUTH'] = "true";
 import { app, serverPromise, shutDown, startUp} from '../src/server' ;
 import * as request from 'supertest';
@@ -23,12 +22,10 @@ let u1DefScene;
 jest.mock('../src/utils/auth');
 
 beforeAll(done => {
-  process.env['DISABLE_AUTH'] = "true";
   // mongo 7 needs wild tiger
   MongoMemoryServer.create({instance: {storageEngine: 'wiredTiger'}}).then(mongo => {
     mongodb = mongo;
     process.env['MONGO_URL'] = `${mongo.getUri()}ntt`;
-    process.env['DISABLE_AUTH'] ='true';
     mongocl = new MongoClient(process.env['MONGO_URL']);
     const db = mongocl.db('ntt');
     usersCollection = db.collection('users');
