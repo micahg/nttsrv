@@ -2,21 +2,26 @@
 process.env['DISABLE_AUTH'] = "true";
 import { app, serverPromise, shutDown, startUp} from '../src/server' ;
 import * as request from 'supertest';
-import {afterAll, beforeAll, describe, it, expect, jest} from '@jest/globals';
+import {afterAll, beforeEach, beforeAll, describe, it, expect, jest} from '@jest/globals';
 import { Server } from 'node:http';
 import { getFakeUser, getOAuthPublicKey } from '../src/utils/auth';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Collection} from 'mongodb';
 import { userZero, userOne } from './assets/auth';
+import { fail } from 'node:assert';
 
 const b64Img = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=';
+const imgBlob = new Blob([b64Img], { type: 'image/png' });
 
 let server: Server;
 let mongodb: MongoMemoryServer;
 let mongocl: MongoClient;
 let scenesCollection: Collection;
 let usersCollection: Collection;
+
+let u0DefScene;
+let u1DefScene;
 
 jest.mock('../src/utils/auth');
 
@@ -51,13 +56,17 @@ afterAll(() => {
 
 describe("scene", () => {
 
-  it('Should create default scenes', async () => {
+  // start each test with the zero user as the calling user
+  beforeEach(() => {
     (getFakeUser as jest.Mock).mockReturnValue(userZero);
+  });
 
+  it('Should create default scenes', async () => {
     const resp0 = await request(app).get('/scene');
-    const uid1 = resp0.body[0].user
+    u0DefScene = resp0.body[0];
+    const uid1 = u0DefScene.user;
     expect(resp0.statusCode).toBe(200);
-    expect(resp0.body[0].description).toEqual('default');
+    expect(u0DefScene.description).toEqual('default');
     const sceneCount0 = await scenesCollection.countDocuments();
     expect(sceneCount0).toBe(1)
     const userCount0 = await usersCollection.countDocuments();
@@ -66,9 +75,10 @@ describe("scene", () => {
     (getFakeUser as jest.Mock).mockReturnValue(userOne);
 
     const resp = await request(app).get('/scene');
-    const uid2 = resp.body[0].user;
+    u1DefScene = resp.body[0];
+    const uid2 = u1DefScene.user;
     expect(resp.statusCode).toBe(200);
-    expect(resp.body[0].description).toEqual('default');
+    expect(u1DefScene.description).toEqual('default');
     const sceneCount = await scenesCollection.countDocuments();
     expect(sceneCount).toBe(2)
     const userCount = await usersCollection.countDocuments();
@@ -76,28 +86,42 @@ describe("scene", () => {
     expect(uid1).not.toEqual(uid2);
   });
 
-  it ('Should fail accessing a scene it does not have access to', async () => {
-    expect(1).toBe(1);
+  it('Should 401 a totally bogus user', async () => {
+    (getFakeUser as jest.Mock).mockReturnValue('THIS_ONE_DOES_NOT_EXST');
+    const resp = await request(app).get('/scene/000000000000000000000000');
+    expect(resp.statusCode).toBe(401);
   });
 
-  // MICAH next add images to the scene.
+  it('Should 500 a totally bogus scene', async () => {
+    const resp = await request(app).get('/scene/asdf');
+    expect(resp.statusCode).toEqual(500);
+  });
 
-  // it('Should find empty scenes when there are no scenes', async () => {
-  //   (userUtils.getOrCreateUser as jest.Mock).mockReturnValue(Promise.resolve({sub: 'd00t'}));
-  //   (sceneUtils.getOrCreateScenes as jest.Mock).mockReturnValue(Promise.resolve([]));
-  //   const resp = await request(app).get('/scene');
-  //   expect(resp.body).toHaveLength(0);
-  //   expect(resp.body).toEqual([]);
-  //   expect(resp.statusCode).toBe(200);
-  // });
+  it('Should 404 a scene it does not have', async () => {
+    const resp = await request(app).get('/scene/000000000000000000000000');
+    expect(resp.statusCode).toEqual(404);
+  });
 
-  // it('Should find one scene when there is one scene', async () => {
-  //   const scene = { _id: "id", user: "user_id"};
-  //   (userUtils.getOrCreateUser as jest.Mock).mockReturnValue(Promise.resolve({sub: 'd00t'}));
-  //   (sceneUtils.getOrCreateScenes as jest.Mock).mockReturnValue(Promise.resolve([scene]));
-  //   const resp = await request(app).get('/scene');
-  //   expect(resp.body).toHaveLength(1);
-  //   expect(resp.body).toEqual([scene]);
-  //   expect(resp.statusCode).toBe(200);
-  // });
+  it('Should find a scene it does have access to', async () => {
+    const url = `/scene/${u0DefScene._id}`;
+    const resp = await request(app).get(url);
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body._id).toEqual(u0DefScene._id);
+    expect(resp.body.description).toEqual('default');
+  });
+
+  it('Should accept a background', async () => {
+    const url = `/scene/${u0DefScene._id}/content`;
+    let resp;
+    try {
+
+      resp = await request(app)
+        .put(url)
+        .field('layer', 'background')
+        .attach('image', 'test/assets/1x1.png');
+    } catch (err) {
+      fail(`Exception: ${JSON.stringify(err)}`);
+    }
+    expect(resp.statusCode).toBe(406);
+  });
 });

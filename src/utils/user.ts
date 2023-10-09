@@ -2,6 +2,11 @@ import { IUser, User } from "../models/user";
 
 import { AuthResult } from "express-oauth2-jwt-bearer";
 
+export function userExistsOr401(user: IUser) {
+  if (!user) throw new Error('No user', {cause: 401});
+  return user;
+}
+
 export async function getUser(auth: AuthResult): Promise<IUser> {
   return User.findOne({sub: auth.payload.sub});
 }

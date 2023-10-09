@@ -2,6 +2,10 @@ import { listen } from "../config/express";
 import { IScene, Scene } from "../models/scene";
 import { IUser } from "../models/user";
 
+export function getSceneById(id: string, userId: string) {
+  return Scene.findOne({_id: id, user: userId});
+}
+
 export function getScenesByUser(user: IUser): Promise<IScene[]> {
   return Scene.find({user: user._id})
 }

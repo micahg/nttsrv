@@ -8,12 +8,12 @@ import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
 import { updateAsset } from "../routes/asset";
-import { NO_AUTH_ASSET, PATH_ASSET, SCENE_PATH, STATE_ASSET, VIEWPORT_ASSET } from "../utils/constants";
+import { NO_AUTH_ASSET, PATH_ASSET, ALL_SCENES_PATH, STATE_ASSET, VIEWPORT_ASSET, SCENE_PATH, SCENE_CONTENT_PATH } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
 
 import { auth } from "express-oauth2-jwt-bearer";
-import { createScene, getScenes } from "../routes/scene";
+import { createScene, getScene, getScenes, updateSceneContent } from "../routes/scene";
 import { getFakeUser } from "../utils/auth";
 
 function getJWTCheck(noauth: boolean) {
@@ -76,22 +76,23 @@ export function create(): Express {
   let destdir: string = os.tmpdir();
   let upload:multer.Multer = multer({dest: destdir});
 
-  app.get(NO_AUTH_ASSET,  (_req, res) => res.status(200).send({noauth: noauth}));
-  app.put(PATH_ASSET,     jwtCheck, upload.single('image'), updateAsset);
-  app.get(STATE_ASSET,    jwtCheck, getState);
-  app.put(STATE_ASSET,    jwtCheck, updateState);
-  app.put(VIEWPORT_ASSET, jwtCheck, setViewPort);
-  app.get(SCENE_PATH,     jwtCheck, getScenes);
-  app.put(SCENE_PATH,     jwtCheck, createScene);
+  app.get(NO_AUTH_ASSET,                (_req, res) => res.status(200).send({noauth: noauth}));
+  app.put(PATH_ASSET,         jwtCheck, upload.single('image'), updateAsset);
+  app.get(STATE_ASSET,        jwtCheck, getState);
+  app.put(STATE_ASSET,        jwtCheck, updateState);
+  app.put(VIEWPORT_ASSET,     jwtCheck, setViewPort);
+  app.get(SCENE_PATH,         jwtCheck, getScene);
+  app.get(ALL_SCENES_PATH,    jwtCheck, getScenes);
+  app.put(ALL_SCENES_PATH,    jwtCheck, createScene);
+  app.put(SCENE_CONTENT_PATH, jwtCheck, upload.single('image'), updateSceneContent);
 
   // handle errors
   app.use((err, req, res, next) => {
     if (!err) next();
-    if (err.status) {
-      return res.sendStatus(err.status);
-    }
+    if (err.status) return res.sendStatus(err.status);
+    
     // generic in-app exception handling
-    if (err.cause === 401) {
+    if (err.cause) {
       log.error(`${req.method} failed`, {status: err.cause, err: err.message});
       return res.sendStatus(err.cause);
     }
