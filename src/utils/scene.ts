@@ -1,6 +1,8 @@
 import { listen } from "../config/express";
 import { IScene, Scene } from "../models/scene";
 import { IUser } from "../models/user";
+import { updateAsset } from "../routes/asset";
+import { LayerUpdate } from "./localstore";
 
 export function getSceneById(id: string, userId: string) {
   return Scene.findOne({_id: id, user: userId});
@@ -8,6 +10,18 @@ export function getSceneById(id: string, userId: string) {
 
 export function getScenesByUser(user: IUser): Promise<IScene[]> {
   return Scene.find({user: user._id})
+}
+
+export function setSceneTableContent(id: string, path: string) {
+  return Scene.updateOne({_id: id}, {tableContent: path});
+}
+
+export function setSceneUserContent(id: string, path: string) {
+  return Scene.updateOne({_id: id}, {userContent: path});
+}
+
+export function setSceneOverlayContent(id: string, path: string) {
+  return Scene.updateOne({_id: id}, {overlayContent: path});
 }
 
 export function createDefaultScene(user: IUser): Promise<IScene> {

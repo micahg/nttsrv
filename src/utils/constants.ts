@@ -13,7 +13,14 @@ export const ALL_SCENES_PATH     = '/scene';
 export const SCENE_PATH          = '/scene/:id';
 export const SCENE_CONTENT_PATH  = '/scene/:id/content';
 
-export const VALID_LAYERS = ['overlay', 'background'];
+export const VALID_LAYERS = ['overlay', 'background', 'gamemaster'];
+
+export const LAYER_TO_SCENE = {
+    'overlay': 'overlayContent',
+    'background': 'tableContent',
+    'gamemaster': 'userContent',
+};
+
 export const VALID_CONTENT_TYPES = ['image/png', 'image/jpeg'];
 export const   CONTENT_TYPE_EXTS = ['png',       'jpg'];
 export const DEST_FOLDER = 'public';

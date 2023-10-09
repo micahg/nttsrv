@@ -6,8 +6,10 @@ import { get } from "node:https";
 
 import { log } from "./logger";
 import { CONTENT_TYPE_EXTS, DEST_FOLDER, VALID_CONTENT_TYPES } from "./constants";
+import { IScene } from "../models/scene";
 
 export interface LayerUpdate {
+  id: string,
   layer: string,
   path: string,
 }
@@ -22,7 +24,7 @@ function getContentTypeExtension(contentType: string) {
   return CONTENT_TYPE_EXTS[VALID_CONTENT_TYPES.indexOf(contentType)];
 }
 
-export function updateAssetFromLink(layer: string, req: Request) {
+export function updateAssetFromLink(scene: IScene, layer: string, req: Request) {
   let source: URL; 
   try {
     source = new URL(req.body.image);
@@ -48,7 +50,7 @@ export function updateAssetFromLink(layer: string, req: Request) {
   
       let fileName = `${layer}.${ext}`;
       let dest = `${DEST_FOLDER}/${fileName}`
-      let update: LayerUpdate = {layer: layer, path: fileName};
+      let update: LayerUpdate = {id: scene._id.toString(), layer: layer, path: fileName};
       response.pipe(createWriteStream(dest)
         .on('finish', () => {
           // updateTableState(layer, fileName);
@@ -64,20 +66,20 @@ export function updateAssetFromLink(layer: string, req: Request) {
   });
 }
 
-export function updateAssetFromUpload(layer: string, req: Request): Promise<LayerUpdate> {
+export function updateAssetFromUpload(scene: IScene, layer: string, req: Request): Promise<LayerUpdate> {
   let ext = getContentTypeExtension(req.file.mimetype);
   if (!ext) throw new Error(`Invalid mime type: ${req.file.mimetype}`, {cause: 400});
   let src = req.file.path;
   let fileName = `${layer}.${ext}`
-  let dest = `${DEST_FOLDER}/${fileName}`
+  let dest = `${DEST_FOLDER}/${scene.user}/scene/${scene._id}/${fileName}`
   
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
 
     cp(src, dest, {force: true, preserveTimestamps: true}, err => {
       if (err) throw new Error(`Unable to copy ${src} to ${dest}`, {cause: 500});
   
-      log.info(`Updated ${fileName}`);
-      const update: LayerUpdate = {layer: layer, path: fileName};
+      log.info(`Updated ${dest}`);
+      const update: LayerUpdate = {id: scene._id.toString(), layer: layer, path: dest};
       // updateTableState(layer, fileName);
       rm(src, {force: true}, err => {
         if (err) {

@@ -11,9 +11,6 @@ import { MongoClient, Collection} from 'mongodb';
 import { userZero, userOne } from './assets/auth';
 import { fail } from 'node:assert';
 
-const b64Img = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=';
-const imgBlob = new Blob([b64Img], { type: 'image/png' });
-
 let server: Server;
 let mongodb: MongoMemoryServer;
 let mongocl: MongoClient;
@@ -114,14 +111,32 @@ describe("scene", () => {
     const url = `/scene/${u0DefScene._id}/content`;
     let resp;
     try {
-
-      resp = await request(app)
-        .put(url)
-        .field('layer', 'background')
-        .attach('image', 'test/assets/1x1.png');
+      resp = await request(app).put(url).field('layer', 'background').attach('image', 'test/assets/1x1.png');
     } catch (err) {
       fail(`Exception: ${JSON.stringify(err)}`);
     }
-    expect(resp.statusCode).toBe(406);
+    expect(resp.statusCode).toBe(200);
+  });
+
+  it('Should accept a overlay', async () => {
+    const url = `/scene/${u0DefScene._id}/content`;
+    let resp;
+    try {
+      resp = await request(app).put(url).field('layer', 'overlay').attach('image', 'test/assets/1x1.png');
+    } catch (err) {
+      fail(`Exception: ${JSON.stringify(err)}`);
+    }
+    expect(resp.statusCode).toBe(200);
+  });
+
+  it('Should accept a gamemaster', async () => {
+    const url = `/scene/${u0DefScene._id}/content`;
+    let resp;
+    try {
+      resp = await request(app).put(url).field('layer', 'gamemaster').attach('image', 'test/assets/1x1.png');
+    } catch (err) {
+      fail(`Exception: ${JSON.stringify(err)}`);
+    }
+    expect(resp.statusCode).toBe(200);
   });
 });

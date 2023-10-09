@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getUser, getOrCreateUser, userExistsOr401 } from "../utils/user";
-import { getOrCreateScenes, getSceneById } from "../utils/scene";
+import { getOrCreateScenes, getSceneById, setSceneOverlayContent, setSceneTableContent, setSceneUserContent } from "../utils/scene";
 import { log } from "../utils/logger";
 import { VALID_LAYERS } from "../utils/constants";
 import { IScene } from "../models/scene";
@@ -48,15 +48,19 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
       if (!VALID_LAYERS.includes(layer)) throw new Error(`Invalid layer name in asset update request: ${layer}`, {cause: 400});
 
       // if there is an image upload, handle it
-      if (req.file) return updateAssetFromUpload(layer, req);
+      if (req.file) return updateAssetFromUpload(scene, layer, req);
     
       // if there is an image, but its not in file format, assume its a link
-      if ('image' in req.body) return updateAssetFromLink(layer, req);
+      if ('image' in req.body) return updateAssetFromLink(scene, layer, req);
 
       throw new Error('No file or link in layer update request.', {cause: 406});
     })
-    .then((layer: LayerUpdate) => {
-      throw new Error(`Need to update ${layer}`, {cause: 406});
+    .then((update: LayerUpdate) => {
+      if      (update.layer === 'background') return setSceneTableContent(update.id, update.path);
+      else if (update.layer === 'overlay')    return setSceneOverlayContent(update.id, update.path);
+      else if (update.layer === 'gamemaster') return setSceneUserContent(update.id, update.path);
+      throw new Error(`Invalid layer ${update.layer}`, {cause: 404});
     })
+    .then(() => res.sendStatus(200))
     .catch(err => next(err));
 }
