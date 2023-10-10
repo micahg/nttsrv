@@ -67,7 +67,7 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
     .catch(err => next(err));
 }
 
-export function updateStateViewport(req: Request, res: Response, next: any) {
+export function updateSceneViewport(req: Request, res: Response, next: any) {
   log.info(req.body);
   const vp: Rect = req.body.viewport;
   const bg: Rect = req.body.backgroundSize;
@@ -81,6 +81,6 @@ export function updateStateViewport(req: Request, res: Response, next: any) {
     .then(user => userExistsOr401(user))
     .then(user => getSceneById(req.params.id, user._id.toString()))
     .then(scene => setSceneViewport(scene._id.toString(), bg, vp))
-    .then(() => res.sendStatus(200))
+    .then(scene => res.json(scene))
     .catch(err => next(err));
 }

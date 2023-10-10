@@ -3,6 +3,7 @@ import { IScene, Scene } from "../models/scene";
 import { IUser } from "../models/user";
 import { updateAsset } from "../routes/asset";
 import { LayerUpdate } from "./localstore";
+import { Rect } from "./tablestate";
 
 export function getSceneById(id: string, userId: string) {
   return Scene.findOne({_id: id, user: userId});
@@ -47,4 +48,8 @@ export function getOrCreateScenes(user: IUser): Promise<IScene[]> {
         return createDefaultScene(user).then(newScene => resolve([newScene]));
       });
   });
+}
+
+export function setSceneViewport(id: string, bg?: Rect, vp?: Rect) {
+  return Scene.findOneAndUpdate({_id: id}, {backgroundSize: bg, viewport: vp}, {new: true});
 }

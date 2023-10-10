@@ -141,7 +141,9 @@ describe("scene", () => {
     const resp = await request(app)
       .put(`/scene/${u0DefScene._id}/viewport`)
       .send({viewport: { x: 0, y: 0, width: 0, height: 0}});
-    expect(resp.statusCode).toBe(200);
+      const vp = resp.body.viewport;
+      expect(resp.statusCode).toBe(200);
+      expect(resp.body.viewport.width).toBe(0);
   });
 
   it("Should update the background", async () => {
@@ -149,6 +151,7 @@ describe("scene", () => {
       .put(`/scene/${u0DefScene._id}/viewport`)
       .send({backgroundSize: { x: 0, y: 0, width: 0, height: 0}});
     expect(resp.statusCode).toBe(200);
+    expect(resp.body.backgroundSize.width).toBe(0);
   });
 
   it("Should update the viewport and background", async () => {
@@ -159,6 +162,8 @@ describe("scene", () => {
         viewport: { x: 0, y: 0, width: 1, height: 1},
       });
     expect(resp.statusCode).toBe(200);
+    expect(resp.body.viewport.width).toBe(1);
+    expect(resp.body.backgroundSize.width).toBe(1);
   });
 
 });
