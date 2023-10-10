@@ -14,15 +14,15 @@ export function getScenesByUser(user: IUser): Promise<IScene[]> {
 }
 
 export function setSceneTableContent(id: string, path: string) {
-  return Scene.updateOne({_id: id}, {tableContent: path});
+  return Scene.findOneAndUpdate({_id: id}, {tableContent: path});
 }
 
 export function setSceneUserContent(id: string, path: string) {
-  return Scene.updateOne({_id: id}, {userContent: path});
+  return Scene.findOneAndUpdate({_id: id}, {userContent: path});
 }
 
 export function setSceneOverlayContent(id: string, path: string) {
-  return Scene.updateOne({_id: id}, {overlayContent: path});
+  return Scene.findOneAndUpdate({_id: id}, {overlayContent: path});
 }
 
 export function createDefaultScene(user: IUser): Promise<IScene> {

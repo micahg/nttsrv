@@ -63,7 +63,7 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
       else if (update.layer === 'gamemaster') return setSceneUserContent(update.id, update.path);
       throw new Error(`Invalid layer ${update.layer}`, {cause: 404});
     })
-    .then(() => res.sendStatus(200))
+    .then(scene => res.json(scene))
     .catch(err => next(err));
 }
 

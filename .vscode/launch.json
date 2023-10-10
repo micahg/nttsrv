@@ -40,7 +40,9 @@
         "--runInBand",
         "--testTimeout",
         "60000",
-        "--detectOpenHandles"
+        "--detectOpenHandles",
+        // "--",
+        // "state.test.ts"
       ],
       "env": {
         "MONGOMS_VERSION": "7.0.0",

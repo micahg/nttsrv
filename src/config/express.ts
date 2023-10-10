@@ -73,7 +73,7 @@ export function create(): Express {
     next();
   });
 
-  app.use(express.static('public'));
+  app.use('/public', express.static('public'));
 
   let destdir: string = os.tmpdir();
   let upload:multer.Multer = multer({dest: destdir});
