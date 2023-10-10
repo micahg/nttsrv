@@ -12,6 +12,7 @@ export const VIEWPORT_ASSET      = '/viewport';
 export const ALL_SCENES_PATH     = '/scene';
 export const SCENE_PATH          = '/scene/:id';
 export const SCENE_CONTENT_PATH  = '/scene/:id/content';
+export const SCENE_VIEWPORT_PATH = '/scene/:id/viewport';
 
 export const VALID_LAYERS = ['overlay', 'background', 'gamemaster'];
 
@@ -27,3 +28,5 @@ export const DEST_FOLDER = 'public';
 
 export const ERR_INVALID_URL = "Invalid URL in request... nice try";
 export const ERR_HTTPS_ONLY = "Please use HTTPS source for content";
+
+export const OBJECT_ID_LEN = 24;

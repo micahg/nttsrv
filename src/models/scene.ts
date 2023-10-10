@@ -1,5 +1,6 @@
 import { log } from "../utils/logger";
 import { Schema, model } from 'mongoose';
+import { Rect } from "../utils/tablestate";
 
 /**
  * Student Interface.
@@ -13,6 +14,8 @@ interface IScene {
   overlayContent?: string;
   userContent?: string;
   tableContent?: string;
+  viewport?: Rect;
+  backgroundSize?: Rect;
 }
 
 const SceneSchema = new Schema<IScene>({
@@ -21,6 +24,22 @@ const SceneSchema = new Schema<IScene>({
   overlayContent:  { type: String,                required: false },
   userContent:     { type: String,                required: false },
   tableContent:    { type: String,                required: false },
+  viewport:        { type: {
+      x: Number,
+      y: Number,
+      width: Number,
+      height: Number,
+    },
+    required: false
+  },
+  backgroundSize:  { type: {
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number,
+  },
+  required: false
+}
 }, {timestamps: true});
 
 const Scene = model<IScene>('Scene', SceneSchema);

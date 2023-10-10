@@ -8,12 +8,14 @@ import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
 import { updateAsset } from "../routes/asset";
-import { NO_AUTH_ASSET, PATH_ASSET, ALL_SCENES_PATH, STATE_ASSET, VIEWPORT_ASSET, SCENE_PATH, SCENE_CONTENT_PATH } from "../utils/constants";
+import { NO_AUTH_ASSET, PATH_ASSET, ALL_SCENES_PATH, STATE_ASSET,
+         VIEWPORT_ASSET, SCENE_PATH, SCENE_CONTENT_PATH,
+         SCENE_VIEWPORT_PATH } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
 import { setViewPort } from "../routes/viewport";
 
 import { auth } from "express-oauth2-jwt-bearer";
-import { createScene, getScene, getScenes, updateSceneContent } from "../routes/scene";
+import { createScene, getScene, getScenes, updateSceneContent, updateStateViewport } from "../routes/scene";
 import { getFakeUser } from "../utils/auth";
 
 function getJWTCheck(noauth: boolean) {
@@ -81,6 +83,7 @@ export function create(): Express {
   app.get(STATE_ASSET,        jwtCheck, getState);
   app.put(STATE_ASSET,        jwtCheck, updateState);
   app.put(VIEWPORT_ASSET,     jwtCheck, setViewPort);
+  app.put(SCENE_VIEWPORT_PATH,jwtCheck, updateStateViewport)
   app.get(SCENE_PATH,         jwtCheck, getScene);
   app.get(ALL_SCENES_PATH,    jwtCheck, getScenes);
   app.put(ALL_SCENES_PATH,    jwtCheck, createScene);

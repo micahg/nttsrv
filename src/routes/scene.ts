@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { getUser, getOrCreateUser, userExistsOr401 } from "../utils/user";
-import { getOrCreateScenes, getSceneById, setSceneOverlayContent, setSceneTableContent, setSceneUserContent } from "../utils/scene";
+import { getOrCreateScenes, getSceneById, setSceneOverlayContent, setSceneTableContent, setSceneUserContent, setSceneViewport } from "../utils/scene";
 import { log } from "../utils/logger";
 import { VALID_LAYERS } from "../utils/constants";
 import { IScene } from "../models/scene";
 import { LayerUpdate, updateAssetFromLink, updateAssetFromUpload } from "../utils/localstore";
+import { validateViewPort } from "../utils/viewport";
+import { Rect } from "../utils/tablestate";
 
 export function sceneExistsOr404(scene: IScene) {
   if (!scene) throw new Error('No scene', {cause: 404});
@@ -61,6 +63,24 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
       else if (update.layer === 'gamemaster') return setSceneUserContent(update.id, update.path);
       throw new Error(`Invalid layer ${update.layer}`, {cause: 404});
     })
+    .then(() => res.sendStatus(200))
+    .catch(err => next(err));
+}
+
+export function updateStateViewport(req: Request, res: Response, next: any) {
+  log.info(req.body);
+  const vp: Rect = req.body.viewport;
+  const bg: Rect = req.body.backgroundSize;
+  if (vp && !validateViewPort(vp))
+    throw new Error(`Invalid height in set viewport body`, {cause: 400});
+
+  if (bg && !validateViewPort(bg))
+    throw new Error(`Invalid background rect in set viewport body`, {cause: 400});
+
+  return getUser(req.auth)
+    .then(user => userExistsOr401(user))
+    .then(user => getSceneById(req.params.id, user._id.toString()))
+    .then(scene => setSceneViewport(scene._id.toString(), bg, vp))
     .then(() => res.sendStatus(200))
     .catch(err => next(err));
 }
