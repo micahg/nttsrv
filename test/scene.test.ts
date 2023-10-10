@@ -86,9 +86,9 @@ describe("scene", () => {
     expect(resp.statusCode).toBe(401);
   });
 
-  it('Should 500 a totally bogus scene', async () => {
+  it('Should 400 an invalid scene id', async () => {
     const resp = await request(app).get('/scene/asdf');
-    expect(resp.statusCode).toEqual(500);
+    expect(resp.statusCode).toEqual(400);
   });
 
   it('Should 404 a scene it does not have', async () => {

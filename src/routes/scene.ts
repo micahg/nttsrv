@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getUser, getOrCreateUser, userExistsOr401 } from "../utils/user";
 import { getOrCreateScenes, getSceneById, setSceneOverlayContent, setSceneTableContent, setSceneUserContent, setSceneViewport } from "../utils/scene";
 import { log } from "../utils/logger";
-import { VALID_LAYERS } from "../utils/constants";
+import { OBJECT_ID_LEN, VALID_LAYERS } from "../utils/constants";
 import { IScene } from "../models/scene";
 import { LayerUpdate, updateAssetFromLink, updateAssetFromUpload } from "../utils/localstore";
 import { validateViewPort } from "../utils/viewport";
@@ -14,6 +14,9 @@ export function sceneExistsOr404(scene: IScene) {
 }
 
 export function getScene(req: Request, res: Response, next: any) {
+  if (req.params.id.length != OBJECT_ID_LEN)
+    return res.sendStatus(400);
+
   return getUser(req.auth)
     // do 401 a non-existant user as they don't have access to any scenes
     .then(user => userExistsOr401(user))
@@ -38,7 +41,10 @@ export function createScene(req: Request, res: Response, next: any) {
 }
 
 export function updateSceneContent(req: Request, res: Response, next: any) {
-  return getUser(req.auth)
+  if (req.params.id.length != OBJECT_ID_LEN)
+    return res.sendStatus(400);
+
+    return getUser(req.auth)
     .then(user => userExistsOr401(user)) // valid token but no user => 401
     .then(user => getSceneById(req.params.id, user._id.toString()))
     .then(scene => sceneExistsOr404(scene)) // valid  user but no scene => 404
@@ -68,7 +74,9 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
 }
 
 export function updateSceneViewport(req: Request, res: Response, next: any) {
-  log.info(req.body);
+  if (req.params.id.length != OBJECT_ID_LEN)
+    return res.sendStatus(400);
+
   const vp: Rect = req.body.viewport;
   const bg: Rect = req.body.backgroundSize;
   if (vp && !validateViewPort(vp))
