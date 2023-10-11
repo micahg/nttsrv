@@ -1,15 +1,17 @@
 import { IncomingMessage, Server } from 'http';
 import { Express } from 'express';
-import { EventEmitter, WebSocket } from 'ws';
-import { WebSocketServer } from 'ws';
+import { EventEmitter, WebSocket, WebSocketServer } from 'ws';
 import { verify } from 'jsonwebtoken';
 
 import { ASSETS_UPDATED_SIG } from './constants';
 
 import { log } from "./logger";
-import { getTableState, TableState } from './tablestate';
+import { TableState } from './tablestate';
 import { getFakeUser } from './auth';
 import { IScene } from '../models/scene';
+import { getUserByID } from './user';
+import { getOrCreateTableTop } from './tabletop';
+import { getSceneById } from './scene';
 
 interface WSStateMessage {
   method?: string,
@@ -20,22 +22,23 @@ const AUD: string = process.env.AUDIENCE_URL || 'http://localhost:3000/';
 const ISS: string = process.env.ISSUER_URL   || 'https://nttdev.us.auth0.com/';
 const AUTH_REQURIED: boolean = process.env.DISABLE_AUTH?.toLowerCase() !== "true";
 const SOCKET_SESSIONS: Map<string, WebSocket> = new Map();
+let PEM: string;
 
 
-function getVerifiedToken(token: string, pem: string) {
+function getVerifiedToken(token: string) {
   if (!AUTH_REQURIED) return { sub: getFakeUser() };
-  return verify(token, pem, { audience: AUD, issuerBaseURL: ISS, tokenSigningAlg: 'RS256' });
+  return verify(token, PEM, { audience: AUD, issuerBaseURL: ISS, tokenSigningAlg: 'RS256' });
 }
 
 
-function verifyConnection(sock: WebSocket, req: IncomingMessage, pem: string) {
+function verifyConnection(sock: WebSocket, req: IncomingMessage) {
   log.info(`Websocket connection established ${req.socket.remoteAddress}`);
   let jwt: any;
   try {
     const parsed = new URL(req.url, `http://${req.headers.host}`);
     const token = parsed.searchParams.get('bearer');
     if (!token) throw new Error('Token not present');
-    jwt = getVerifiedToken(token, pem);
+    jwt = getVerifiedToken(token);
   } catch (err) {
     if (err.hasOwnProperty('message')) {
       log.error(`WS token fail: ${err.message} (${JSON.stringify(err)})`);
@@ -46,34 +49,52 @@ function verifyConnection(sock: WebSocket, req: IncomingMessage, pem: string) {
     return;
   }
 
-  // kill the old session (this means we only ever have one client)
-  const user = jwt.sub;
-  if (SOCKET_SESSIONS.has(user)) {
-    SOCKET_SESSIONS.get(user).close();
-    SOCKET_SESSIONS.delete(user);
-  }
-  SOCKET_SESSIONS.set(user, sock);
-
-  let state: TableState = getTableState();
-  // don't send a partial display without overlay by accident
-  if (state.overlay === null) {
-    state = null;
-  }
-  let msg: WSStateMessage = {
-    'method': 'connection',
-    'state': state,
-  }
-  sock.send(JSON.stringify(msg));
+  getUserByID(jwt.sub)
+    .then(user => {
+      // close socket for invalid users
+      if (!user) throw new Error('invalid user');
+      const userID: string = user._id.toString();
+      if (SOCKET_SESSIONS.has(userID)) {
+        log.info(`New connection - closing old WS for user ${userID}`);
+        SOCKET_SESSIONS.get(userID).close();
+        SOCKET_SESSIONS.delete(userID);
+      }
+      SOCKET_SESSIONS.set(userID, sock);
+      return user;
+    })
+    .then(user => getOrCreateTableTop(user))
+    .then(table => getSceneById(table.scene.toString(), table.user.toString()))
+    .then(scene => {
+      log.info(scene);
+      const state: TableState = {
+        overlay: scene.overlayContent,
+        background: scene.tableContent,
+        viewport: scene.viewport,
+        backgroundSize: scene.backgroundSize,
+      };
+      log.info(state);
+      const msg: WSStateMessage = {
+        'method': 'connection',
+        'state': state,
+      }
+      sock.send(JSON.stringify(msg));
+    })
+    .catch(err => {
+      log.error(`Closing websocket due to error: ${JSON.stringify(err)}`);
+      sock.close();
+    })
+  
   sock.on('message', (buf) => {
     let data = buf.toString();
     log.info(`Received "${data}"`);
   });
 }
 
-export function startWSServer(nodeServer: Server, app: Express, pem: string) {
+export function startWSServer(nodeServer: Server, app: Express, pem: string): WebSocketServer {
   log.info('starting websocket server');
-  let wss = new WebSocketServer({server: nodeServer});
-  let emitter = app as EventEmitter;
+  PEM = pem;
+  const wss = new WebSocketServer({server: nodeServer});
+  const emitter = app as EventEmitter;
 
   emitter.on(ASSETS_UPDATED_SIG, (update: IScene) => {
     const userID = update.user.toString();
@@ -91,26 +112,12 @@ export function startWSServer(nodeServer: Server, app: Express, pem: string) {
     }
     log.info(`Sending ${JSON.stringify(msg)}`);
     sock.send(JSON.stringify(msg));
-    // wss.clients.forEach((sock:WebSocket) => {
-    //   let msg: WSStateMessage = {
-    //     'method': ASSETS_UPDATED_SIG,
-    //     'state': tableState,
-    //   }
-    //   console.log(`Sending ${JSON.stringify(msg)}`)
-    //   sock.send(JSON.stringify(msg));
-    // });
   });
-  // emitter.on(ASSETS_UPDATED_SIG, (update: TableState) => {
-  //   wss.clients.forEach((sock:WebSocket) => {
-  //     let msg: WSStateMessage = {
-  //       'method': ASSETS_UPDATED_SIG,
-  //       'state': update,
-  //     }
-  //     console.log(`Sending ${JSON.stringify(msg)}`)
-  //     sock.send(JSON.stringify(msg));
-  //   });
-  // });
 
   wss.on('connection', verifyConnection);
   return wss;
+}
+
+export function stopWSConnections() {
+  for (let sock of SOCKET_SESSIONS.values()) sock.close();
 }

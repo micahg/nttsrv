@@ -4,12 +4,13 @@ import { Server } from 'http';
 import { log } from "./utils/logger";
 
 import * as expressConfig from "./config/express";
-import { startWSServer } from './utils/websocket';
+import { startWSServer, stopWSConnections } from './utils/websocket';
 import { STARTUP_CHECK_SIG, STARTUP_DONE_SIG } from './utils/constants';
 import { getOAuthPublicKey } from './utils/auth';
 
 import { connect } from './config/mongoose';
 import mongoose from 'mongoose';
+import { WebSocketServer } from 'ws';
 
 // mongoose.set('debug', true);
 
@@ -17,6 +18,7 @@ log.info(`System starting in ${process.env.NODE_ENV}`);
 
 // startup flags
 let srvr: Server;
+let wss: WebSocketServer;
 let mongo: typeof mongoose;
 let mongoConnectedFlag = false;
 let storageConnectedFlag = false;
@@ -30,10 +32,18 @@ export const shutDown = (reason: string) => {
     mongo.connection.close().then(() => log.warn('Mongo connection closed'))
       .catch(err => log.error(`Unable to close mongo connection: ${JSON.stringify(err)}`));
   }
+  if (wss) {
+    log.warn(`Closing down websocket server...`);
+    stopWSConnections();
+    wss.close(err => {
+      if (err) log.error(`Unable to close websocket server: ${JSON.stringify(err)}`);
+      else log.warn('Websocket server shut down');
+    });
+  }
   if (srvr) {
     log.warn(`Closing down server...`);
     srvr.close(err => {
-      if (err) console.error(`Unable to shutdown server: ${JSON.stringify(err)}`);
+      if (err) log.error(`Unable to shutdown server: ${JSON.stringify(err)}`);
       else log.warn('Server shut down');
     });
   }
@@ -54,7 +64,7 @@ export const serverPromise = new Promise<Server>((resolve, reject) => {
     srvr = expressConfig.listen(app);
     getOAuthPublicKey().then(pem => {
       log.info('Retrieved OAuth PEM');
-      let wss = startWSServer(srvr, app, pem);
+      wss = startWSServer(srvr, app, pem);
       app.emit(STARTUP_DONE_SIG);
       resolve(srvr);
     }).catch(err => {
