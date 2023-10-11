@@ -1,8 +1,5 @@
-import { listen } from "../config/express";
 import { IScene, Scene } from "../models/scene";
 import { IUser } from "../models/user";
-import { updateAsset } from "../routes/asset";
-import { LayerUpdate } from "./localstore";
 import { Rect } from "./tablestate";
 
 export function getSceneById(id: string, userId: string) {

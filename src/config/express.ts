@@ -7,12 +7,10 @@ import { Express, NextFunction } from "express";
 import * as bodyParser from "body-parser";
 import * as multer from "multer";
 import { Server } from 'http';
-import { updateAsset } from "../routes/asset";
-import { NO_AUTH_ASSET, PATH_ASSET, ALL_SCENES_PATH, STATE_ASSET,
-         VIEWPORT_ASSET, SCENE_PATH, SCENE_CONTENT_PATH,
+import { NO_AUTH_ASSET, ALL_SCENES_PATH, STATE_ASSET,
+         SCENE_PATH, SCENE_CONTENT_PATH,
          SCENE_VIEWPORT_PATH } from "../utils/constants";
 import { getState, updateState } from "../routes/state";
-import { setViewPort } from "../routes/viewport";
 
 import { auth } from "express-oauth2-jwt-bearer";
 import { createScene, getScene, getScenes, updateSceneContent, updateSceneViewport } from "../routes/scene";
@@ -79,10 +77,8 @@ export function create(): Express {
   let upload:multer.Multer = multer({dest: destdir});
 
   app.get(NO_AUTH_ASSET,                (_req, res) => res.status(200).send({noauth: noauth}));
-  app.put(PATH_ASSET,         jwtCheck, upload.single('image'), updateAsset);
   app.get(STATE_ASSET,        jwtCheck, getState);
   app.put(STATE_ASSET,        jwtCheck, updateState);
-  app.put(VIEWPORT_ASSET,     jwtCheck, setViewPort);
   app.put(SCENE_VIEWPORT_PATH,jwtCheck, updateSceneViewport)
   app.get(SCENE_PATH,         jwtCheck, getScene);
   app.get(ALL_SCENES_PATH,    jwtCheck, getScenes);

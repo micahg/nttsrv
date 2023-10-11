@@ -7,8 +7,11 @@ export function userExistsOr401(user: IUser) {
   return user;
 }
 
+export async function getUserByID(user: string): Promise<IUser> {
+  return User.findOne({sub: user});
+}
 export async function getUser(auth: AuthResult): Promise<IUser> {
-  return User.findOne({sub: auth.payload.sub});
+  return getUserByID(auth.payload.sub);
 }
 
 export async function createUser(auth: AuthResult) {
