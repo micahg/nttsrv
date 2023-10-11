@@ -28,9 +28,14 @@ jobs:
         with:
           path: ${{ env.MONGO_CACHE_PATH }}/${{ env.MONGO_BINARY }}
           key: ${{ env.MONGO_BINARY }}
-      - run: npm ci
-      - run: npm run test
-      - run: ls -lt ${{ env.MONGO_CACHE_PATH }}
+      - name: Node Modules
+        run: npm ci
+      - name: Lint Code
+        run: npm run lint
+      - name: Prune Dead Code
+        run: npm run prune
+      - name: Unit Test
+        run: npm run test
   build:
     runs-on: ubuntu-latest
     outputs:

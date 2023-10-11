@@ -23,8 +23,10 @@ let mongo: typeof mongoose;
 let mongoConnectedFlag = false;
 let storageConnectedFlag = false;
 
+// ts-prune-ignore-next used in unit tests
 export const app = expressConfig.create();
 
+// ts-prune-ignore-next used in unit tests
 export const shutDown = (reason: string) => {
   log.warn(`Shutting down (${reason})`);
   if (mongo) {
@@ -51,6 +53,7 @@ export const shutDown = (reason: string) => {
 
 // defer listening for requests until we receive an event to check for startup conditions
 // events are emitted when a precondition is satisfied (eg: connecton to the db)
+// ts-prune-ignore-next used in unit test
 export const serverPromise = new Promise<Server>(resolve => {
   app.on(STARTUP_CHECK_SIG, () => {
 
@@ -74,6 +77,7 @@ export const serverPromise = new Promise<Server>(resolve => {
   });
 });
 
+// ts-prune-ignore-next used in unit test
 export function startUp() {
   // TODO move this to the storage driver
   log.info(`Create public resources folder...`);

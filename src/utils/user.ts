@@ -14,7 +14,7 @@ export async function getUser(auth: AuthResult): Promise<IUser> {
   return getUserByID(auth.payload.sub);
 }
 
-export async function createUser(auth: AuthResult) {
+async function createUser(auth: AuthResult) {
   return User.create({sub: auth.payload.sub});
   // req.auth = {
   //   payload: {

@@ -10,7 +10,8 @@
     "start": "node --watch server.js",
     "test": "jest --verbose --detectOpenHandles",
     "test_debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
-    "lint": "eslint --ext src/server.ts"
+    "lint": "eslint --ext src/server.ts",
+    "prune": "ts-prune"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "ts-jest": "^29.1.1",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
+    "ts-prune": "^0.10.3",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   },

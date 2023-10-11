@@ -8,7 +8,7 @@ import { LayerUpdate, updateAssetFromLink, updateAssetFromUpload } from "../util
 import { validateViewPort } from "../utils/viewport";
 import { Rect } from "../utils/tablestate";
 
-export function sceneExistsOr404(scene: IScene) {
+function sceneExistsOr404(scene: IScene) {
   if (!scene) throw new Error('No scene', {cause: 404});
   return scene;
 }

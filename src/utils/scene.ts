@@ -6,7 +6,7 @@ export function getSceneById(id: string, userId: string) {
   return Scene.findOne({_id: id, user: userId});
 }
 
-export function getScenesByUser(user: IUser): Promise<IScene[]> {
+function getScenesByUser(user: IUser): Promise<IScene[]> {
   return Scene.find({user: user._id})
 }
 
@@ -22,7 +22,7 @@ export function setSceneOverlayContent(id: string, path: string) {
   return Scene.findOneAndUpdate({_id: id}, {overlayContent: path});
 }
 
-export function createDefaultScene(user: IUser): Promise<IScene> {
+function createDefaultScene(user: IUser): Promise<IScene> {
   const scene: IScene = {
     user: user._id,
     description: 'default',
