@@ -51,7 +51,7 @@ export const shutDown = (reason: string) => {
 
 // defer listening for requests until we receive an event to check for startup conditions
 // events are emitted when a precondition is satisfied (eg: connecton to the db)
-export const serverPromise = new Promise<Server>((resolve, reject) => {
+export const serverPromise = new Promise<Server>(resolve => {
   app.on(STARTUP_CHECK_SIG, () => {
 
     if (!mongoConnectedFlag) return;
@@ -82,7 +82,7 @@ export function startUp() {
       log.error(`Unable to create public folder: ${JSON.stringify(err)}`);
       process.exit(1);
     }
-    log.info('Created public asset path');
+    log.info(`Created public asset path: ${path}`);
     storageConnectedFlag = true;
     app.emit(STARTUP_CHECK_SIG);
   });
