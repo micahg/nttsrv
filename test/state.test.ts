@@ -7,9 +7,9 @@ import { getFakeUser, getOAuthPublicKey } from '../src/utils/auth';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Collection} from 'mongodb';
-import { userZero, userOne } from './assets/auth';
+import { userZero } from './assets/auth';
 import { fail } from 'node:assert';
-import { Rect } from '../src/utils/tablestate';
+const WebSocketClient = require('websocket').client;
 
 let server: Server;
 let mongodb: MongoMemoryServer;
@@ -18,7 +18,6 @@ let scenesCollection: Collection;
 let usersCollection: Collection;
 
 let u0DefScene;
-let u1DefScene;
 
 jest.mock('../src/utils/auth');
 
@@ -96,5 +95,24 @@ describe("scene", () => {
   it("Should update with a background", async () => {
     const resp = await request(app).put('/state').send({scene: u0DefScene._id});
     expect(resp.statusCode).toBe(200);
+  });
+
+  it("Should handle a websocket connection", (done) => {
+    // const socket = io("ws://localhost:3000");
+    const client = new WebSocketClient();
+    client.on('connect', conn => {
+      conn.on('message', msg => {
+        try {
+          console.log(`MICAH GOT MSG ${JSON.stringify(msg)}`);
+          expect(msg).toHaveProperty('utf8Data');
+          const data = JSON.parse(msg.utf8Data);
+          expect(data.method).toBe('connection');
+        } finally {
+          conn.close();
+        }
+      })
+      conn.on('close', () => done());
+    });
+    client.connect('ws://localhost:3000?bearer=asdf', 'echo-protocol');
   });
 });  

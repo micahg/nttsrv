@@ -119,5 +119,5 @@ export function startWSServer(nodeServer: Server, app: Express, pem: string): We
 }
 
 export function stopWSConnections() {
-  for (let sock of SOCKET_SESSIONS.values()) sock.close();
+  for (const sock of SOCKET_SESSIONS.values()) sock.close();
 }
