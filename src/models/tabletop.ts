@@ -1,4 +1,3 @@
-import { log } from "../utils/logger";
 import { Schema, model } from 'mongoose';
 
 /**

@@ -27,11 +27,13 @@ function getJWTCheck(noauth: boolean) {
   // without auth stub out the normally needed fields so we don't have to
   // handle unauthenticated requests specially. Otherwise, let auth0 populate
   // the JWT authentication token claims.
-  return noauth ? (_rq: any, _rs: any, next: NextFunction) => {
-    _rq.auth = {
+  return noauth ? (req: express.Request, _rs: express.Response, next: NextFunction) => {
+    req.auth = {
       payload: {
         sub: getFakeUser()
-      }
+      },
+      header: null,
+      token: null,
     }
     return next()
   }: auth({
@@ -73,8 +75,8 @@ export function create(): Express {
 
   app.use('/public', express.static('public'));
 
-  let destdir: string = os.tmpdir();
-  let upload:multer.Multer = multer({dest: destdir});
+  const destdir: string = os.tmpdir();
+  const upload:multer.Multer = multer({dest: destdir});
 
   app.get(NO_AUTH_ASSET,                (_req, res) => res.status(200).send({noauth: noauth}));
   app.get(STATE_ASSET,        jwtCheck, getState);
