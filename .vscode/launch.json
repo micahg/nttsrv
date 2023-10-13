@@ -41,8 +41,9 @@
         "--testTimeout",
         "60000",
         "--detectOpenHandles",
+        "--coverage",
         // "--",
-        // "state.test.ts"
+        // "websocket.test.ts"
       ],
       "env": {
         "MONGOMS_VERSION": "7.0.0",
