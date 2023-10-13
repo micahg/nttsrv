@@ -52,7 +52,7 @@ export function updateSceneContent(req: Request, res: Response, next: any) {
       // ensure valid layer
       if (!('layer' in req.body)) throw new Error('Unspecified layer in asset update request!', {cause: 400});
     
-      let layer: string = req.body.layer.toLowerCase();
+      const layer: string = req.body.layer.toLowerCase();
       if (!VALID_LAYERS.includes(layer)) throw new Error(`Invalid layer name in asset update request: ${layer}`, {cause: 400});
 
       // if there is an image upload, handle it

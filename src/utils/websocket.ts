@@ -69,14 +69,12 @@ function verifyConnection(sock: WebSocket, req: IncomingMessage) {
       return getSceneById(table.scene.toString(), table.user.toString())
     })
     .then(scene => {
-      log.info(scene);
       const state: TableState = {
         overlay: scene.overlayContent,
         background: scene.tableContent,
         viewport: scene.viewport,
         backgroundSize: scene.backgroundSize,
       };
-      log.info(state);
       const msg: WSStateMessage = {
         'method': 'connection',
         'state': state,
