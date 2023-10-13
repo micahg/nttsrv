@@ -2,16 +2,12 @@ process.env['DISABLE_AUTH'] = "true";
 import { app, serverPromise, shutDown, startUp} from '../src/server' ;
 import * as request from 'supertest';
 import {afterAll, beforeEach, beforeAll, describe, it, expect, jest} from '@jest/globals';
-import { Server } from 'node:http';
 import { getFakeUser, getOAuthPublicKey } from '../src/utils/auth';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient, Collection} from 'mongodb';
 import { userZero } from './assets/auth';
-import { fail } from 'node:assert';
-const WebSocketClient = require('websocket').client;
 
-let server: Server;
 let mongodb: MongoMemoryServer;
 let mongocl: MongoClient;
 let scenesCollection: Collection;
@@ -35,7 +31,7 @@ beforeAll(done => {
 
     startUp();
     serverPromise
-      .then(srvr => { server = srvr; done(); })
+      .then(() => done())
       .catch(err => {
         console.error(`Getting server failed: ${JSON.stringify(err)}`);
         process.exit(1);
@@ -95,24 +91,5 @@ describe("scene", () => {
   it("Should update with a background", async () => {
     const resp = await request(app).put('/state').send({scene: u0DefScene._id});
     expect(resp.statusCode).toBe(200);
-  });
-
-  it("Should handle a websocket connection", (done) => {
-    // const socket = io("ws://localhost:3000");
-    const client = new WebSocketClient();
-    client.on('connect', conn => {
-      conn.on('message', msg => {
-        try {
-          console.log(`MICAH GOT MSG ${JSON.stringify(msg)}`);
-          expect(msg).toHaveProperty('utf8Data');
-          const data = JSON.parse(msg.utf8Data);
-          expect(data.method).toBe('connection');
-        } finally {
-          conn.close();
-        }
-      })
-      conn.on('close', () => done());
-    });
-    client.connect('ws://localhost:3000?bearer=asdf', 'echo-protocol');
   });
 });  

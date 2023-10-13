@@ -33,14 +33,14 @@ function getVerifiedToken(token: string) {
 
 function verifyConnection(sock: WebSocket, req: IncomingMessage) {
   log.info(`Websocket connection established ${req.socket.remoteAddress}`);
-  let jwt: any;
+  let jwt;
   try {
     const parsed = new URL(req.url, `http://${req.headers.host}`);
     const token = parsed.searchParams.get('bearer');
     if (!token) throw new Error('Token not present');
     jwt = getVerifiedToken(token);
   } catch (err) {
-    if (err.hasOwnProperty('message')) {
+    if (Object.prototype.hasOwnProperty.call(err, 'message')) {
       log.error(`WS token fail: ${err.message} (${JSON.stringify(err)})`);
     } else {
       log.error(`WS token fail: ${err}`);
@@ -60,10 +60,14 @@ function verifyConnection(sock: WebSocket, req: IncomingMessage) {
         SOCKET_SESSIONS.delete(userID);
       }
       SOCKET_SESSIONS.set(userID, sock);
+      sock.on('close', () => SOCKET_SESSIONS.delete(userID));
       return user;
     })
     .then(user => getOrCreateTableTop(user))
-    .then(table => getSceneById(table.scene.toString(), table.user.toString()))
+    .then(table => {
+      if (!table.scene) throw new Error('User has no scene set');
+      return getSceneById(table.scene.toString(), table.user.toString())
+    })
     .then(scene => {
       log.info(scene);
       const state: TableState = {
@@ -80,12 +84,15 @@ function verifyConnection(sock: WebSocket, req: IncomingMessage) {
       sock.send(JSON.stringify(msg));
     })
     .catch(err => {
-      log.error(`Closing websocket due to error: ${JSON.stringify(err)}`);
+      // TODO MICAH MAYBE SEND THE CLIENT A REASON FOR THE FORCEFUL SHUTDOWN SO THE CLIENT CAN DISPLAY IT?
+      // IF YOU DO, MAYBE USE THE CAUSE PROPERTY OF Error AND YOU CAN SEND THAT
+      const msg = (Object.prototype.hasOwnProperty.call(err, 'message')) ? err.message : JSON.stringify(err);
+      log.error(`Closing websocket due to error: ${msg}`);
       sock.close();
     })
   
   sock.on('message', (buf) => {
-    let data = buf.toString();
+    const data = buf.toString();
     log.info(`Received "${data}"`);
   });
 }
@@ -99,7 +106,7 @@ export function startWSServer(nodeServer: Server, app: Express, pem: string): We
   emitter.on(ASSETS_UPDATED_SIG, (update: IScene) => {
     const userID = update.user.toString();
     if (!SOCKET_SESSIONS.has(userID)) return;
-    let tableState: TableState = {
+    const tableState: TableState = {
       overlay: update.overlayContent,
       background: update.tableContent,
       viewport: update.viewport,
