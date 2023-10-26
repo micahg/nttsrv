@@ -1,5 +1,3 @@
-import { log } from "../utils/logger";
-import { promises, resolveAny } from 'dns';
 import * as https from 'https';
 
 export function getOAuthPublicKey(): Promise<string> {
@@ -12,6 +10,7 @@ export function getOAuthPublicKey(): Promise<string> {
 
   return new Promise((resolve, reject) => {
     try {
+      // todo this fails less than gracefully offline
       https.get(pem, res => {
         if (res.statusCode !== 200)
           return reject(`Error fetching PEM: ${res.statusCode}`);
@@ -19,9 +18,11 @@ export function getOAuthPublicKey(): Promise<string> {
         res.on('data', data => body += data);
         res.on('end', () => resolve(body));
         res.on('error', err => reject(err));
-      });
+      })
     } catch(err) {
       reject(err);
     }
   });
 }
+
+export function getFakeUser() { return "noauth|0" }
