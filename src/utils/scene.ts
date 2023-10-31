@@ -30,6 +30,15 @@ function createDefaultScene(user: IUser): Promise<IScene> {
   return Scene.create(scene);
 }
 
+export function createUserScene(user: IUser, scene: IScene): Promise<IScene> {
+  scene.user = user._id;
+  return Scene.create(scene);
+}
+
+export function deleteUserScene(user: IUser, sceneId: string) {
+  return Scene.deleteOne({_id: sceneId, user: user._id});
+}
+
 /**
  * Get the scenes for this user, create a default scene if they have none.
  *
