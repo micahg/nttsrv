@@ -46,6 +46,10 @@ export function getScenes(req: Request, res: Response, next: any) {
 }
 
 export function deleteScene(req: Request, res: Response, next: any) {
+  // ensure the id is reasonable
+  if (req.params.id.length != OBJECT_ID_LEN)
+    return res.sendStatus(400);
+
   return getUser(req.auth)
     .then(user => userExistsOr401(user))
     .then(user => deleteUserScene(user, req.params.id))
@@ -53,7 +57,6 @@ export function deleteScene(req: Request, res: Response, next: any) {
 }
 
 export function createScene(req: Request, res: Response, next: any) {
-  log.info('create scene', {scene: req.body});
   return getUser(req.auth)
     .then(user => userExistsOr401(user))
     .then(user => {
