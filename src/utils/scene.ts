@@ -11,15 +11,15 @@ function getScenesByUser(user: IUser): Promise<IScene[]> {
 }
 
 export function setSceneTableContent(id: string, path: string) {
-  return Scene.findOneAndUpdate({_id: id}, {tableContent: path}, {new: true});
+  return Scene.findOneAndUpdate({_id: id}, {$set: {playerContent: path}, $inc: {playerContentRev: 1}}, {new: true});
 }
 
 export function setSceneUserContent(id: string, path: string) {
-  return Scene.findOneAndUpdate({_id: id}, {userContent: path}, {new: true});
+  return Scene.findOneAndUpdate({_id: id}, {$set: {detailContent: path}, $inc: {detailContentRev: 1}}, {new: true});
 }
 
 export function setSceneOverlayContent(id: string, path: string) {
-  return Scene.findOneAndUpdate({_id: id}, {overlayContent: path}, {new: true});
+  return Scene.findOneAndUpdate({_id: id}, {$set: {overlayContent: path}, $inc: {overlayContentRev: 1}}, {new: true});
 }
 
 function createDefaultScene(user: IUser): Promise<IScene> {
