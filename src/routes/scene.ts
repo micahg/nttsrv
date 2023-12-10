@@ -106,7 +106,7 @@ export function updateSceneViewport(req: Request, res: Response, next: any) {
   const bg: Rect = req.body.backgroundSize;
   const angle: number = req.body.angle;
 
-  if (!vp && !bg && !angle)
+  if ((angle === undefined || angle === null) && !bg && !vp)
     throw new Error(`Nothing to do`, {cause: 400});
 
   if (vp && !validateViewPort(vp))
