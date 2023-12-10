@@ -13,5 +13,6 @@ export interface TableState {
   overlay?: string;
   background?: string;
   viewport: Rect;
+  angle: number;
   backgroundSize?: Rect;
 }
