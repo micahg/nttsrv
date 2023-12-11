@@ -3,7 +3,7 @@ export interface Rect {
   y: number,
   width: number,
   height: number,
-};
+}
 
 /**
  * Table state. In the future this should be in mongo if we need persistance
