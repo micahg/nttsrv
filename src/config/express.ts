@@ -103,7 +103,7 @@ export function create(): Express {
   app.use(
     "/public",
     (req, res, next) => {
-      if (req.method === "OPTIONS") res.send(200);
+      if (req.method === "OPTIONS") res.sendStatus(200);
       else next();
     },
     jwtCheck,
